@@ -41,6 +41,8 @@
 
 <!-- Three or four sentences: what a user asks for, and what they get back. -->
 
+You tell FitFindr what you want in plain language, e.g. "vintage graphic tee under $30, size M". It searches the mock listings (Depop, ThredUp, Poshmark), picks the best match, and suggests outfits that combine it with pieces from your wardrobe (or general styling advice if your wardrobe is empty). It then writes a short caption you could post about the find. If nothing matches, it stops and tells you which part of the query to loosen.
+
 
 
 ---
@@ -59,24 +61,24 @@
 
 ### `search_listings`
 
-- **What it does:**
-- **Inputs:** <!-- name and type each: `max_price` (float), not "a price" -->
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Filters the listings file by price and size, scores what is left by keyword overlap with the description, and returns the best matches.
+- **Inputs:** `description` (str), `size` (str or None), `max_price` (float or None).
+- **Returns:** A list of at most 10 listing dicts, best match first. Each dict has `id`, `title`, `description`, `category`, `style_tags` (list), `size`, `condition`, `price` (float), `colors` (list), `brand` (str or None), `platform`. Size matches on whole tokens, so "M" matches "S/M" and "M/L" but "S" does not match "US 9" and "L" does not match "XL". `max_price` is inclusive. Title and style-tag hits score 2, other fields score 1.
+- **When it has nothing:** Returns `[]` (never None, never an exception).
 
 ### `suggest_outfit`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Asks the model for one or two outfits built around the new item and the user's wardrobe.
+- **Inputs:** `new_item` (dict, a listing), `wardrobe` (dict with an `items` list of wardrobe item dicts).
+- **Returns:** A non-empty string of outfit suggestions, naming wardrobe pieces by their listed names.
+- **When it has nothing:** If `wardrobe["items"]` is empty it returns general styling advice for the item instead. If the model returns blank text it returns a generic fallback line, so the result is never `""`.
 
 ### `create_fit_card`
 
-- **What it does:**
-- **Inputs:**
-- **Returns:**
-- **When it has nothing:**
+- **What it does:** Asks the model for a short, postable caption about the find.
+- **Inputs:** `outfit` (str, from `suggest_outfit`), `new_item` (dict, a listing).
+- **Returns:** A 2-4 sentence caption string that mentions the item, its price and its platform.
+- **When it has nothing:** If `outfit` is empty or whitespace, returns the message "No outfit was provided, so there is nothing to write a caption about." and does not call the model.
 
 ---
 
@@ -93,13 +95,13 @@
      The grader checks your code against what you claim here, so the file and
      function have to be real. -->
 
-**Branch rule:**
+**Branch rule:** If `search_listings` returns an empty list, put a message in `session["error"]` that names the query and what to change (raise the price limit, drop the size, use broader keywords), and return the session without calling `suggest_outfit` or `create_fit_card`. Otherwise, take the first result as `session["selected_item"]` and go on to `suggest_outfit`, then `create_fit_card`.
 
 **Where it lives:** `agent.py::run_agent`
 
-**How the query is parsed:** <!-- regex, string splitting, or asking the model — say which -->
+**How the query is parsed:** Regex, in `agent.py::parse_query`. It pulls a price ceiling from "under $30" / "below 30" / "$30", a size from "size M", and treats the rest as the description.
 
-**What moves through the session:** <!-- which fields, in what order -->
+**What moves through the session:** `query` -> `parsed` -> `search_results` -> `selected_item` -> `outfit_suggestion` -> `fit_card`. Each tool reads its input back out of the session rather than from a local variable. `error` is set only when the run stops early.
 
 ---
 
