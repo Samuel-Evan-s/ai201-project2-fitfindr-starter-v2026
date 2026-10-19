@@ -25,9 +25,7 @@ Given a query that matches at least one listing, the agent completes all three
 tool calls and returns a fit card — in at least 4 of 5 tries.
 
 **Why this target:**
-<!-- Why 4 of 5 and not 5 of 5? Something about your search, probably —
-     "my search is a plain keyword match and some phrasings will miss" is a
-     real answer. -->
+I picked 4 of 5 rather than 5 of 5 because search is a plain keyword match over title, tags, description, colour and brand. A phrasing like "retro band shirt" shares no words with a listing titled "Vintage Band Tee" and will miss, and the model-backed second and third calls can also fail or time out. 4 of 5 allows one such miss but still fails an agent that is mostly broken.
 
 ---
 
@@ -37,8 +35,7 @@ Given a query that matches no listings, the agent stops before calling
 `suggest_outfit` and returns a message naming what to change — 5 of 5 tries.
 
 **Why this target:**
-<!-- Why is 5 of 5 reasonable here when criterion 1 isn't? What's different
-     about this path? -->
+5 of 5 is reasonable here because this path uses no model: the branch is a plain `if not results` check on a deterministic filter, so the same impossible query gives the same result every time. One failure in five would mean the branch itself is broken, not that something was unlucky.
 
 ---
 
@@ -54,11 +51,10 @@ Given a query that matches no listings, the agent stops before calling
      compares session["selected_item"] against what actually reached
      suggest_outfit is the shape you're after. -->
 
-
+Across 5 runs of a matching query, the listing `id` that `suggest_outfit` receives and the `id` that `create_fit_card` receives both equal `session["selected_item"]["id"]` in 5 of 5 runs, and `session["selected_item"]` is the same listing as `session["search_results"][0]`. (Check by wrapping the two tools to record the `id` they were called with.)
 
 **Why this target:**
-
-
+5 of 5, because state is plain dictionary reads in `run_agent` with no model involved. If it fails once it is a bug, not variation. I chose the item `id` rather than the title because titles can repeat across listings while ids are unique.
 
 ---
 
@@ -75,11 +71,10 @@ Given a query that matches no listings, the agent stops before calling
      sentence? A card longer than a caption anyone would post? Any of those can
      be turned into a number. -->
 
-
+Across 5 runs of the same matching query, each fit card is 2 to 4 sentences, mentions the item's price and its platform name, and at least 2 of the 5 cards are not word-for-word identical. Separately, running 3 different items must give 3 different opening sentences.
 
 **Why this target:**
-
-
+The card calls a model at temperature 0.9, so wording varies and an exact-text check would be wrong. I made the checkable parts (length, price, platform) 5 of 5 because the prompt asks for them directly, so a miss points at a prompt problem rather than ordinary variation. I did not demand all 5 be different, since a short caption for the same item can legitimately repeat; the different-items check catches the real failure, a template-like caption.
 
 ---
 
@@ -92,11 +87,10 @@ Given a query that matches no listings, the agent stops before calling
      search respects a price ceiling — anything, as long as it names a number
      or an observable outcome. -->
 
-
+When the wardrobe is empty (`get_empty_wardrobe()`), a matching query still returns a non-empty `outfit_suggestion` and a fit card, with `session["error"]` equal to None, in 5 of 5 tries.
 
 **Why this target:**
-
-
+The empty wardrobe is the most likely input from a new user, and `suggest_outfit` has a separate prompt for it, so it is a distinct path from the example wardrobe. I chose 5 of 5 because the empty case is handled by a plain `if` in `suggest_outfit` and the prompt for it is simpler than the wardrobe one; a miss means that branch is wrong, not that the search was unlucky.
 
 ---
 

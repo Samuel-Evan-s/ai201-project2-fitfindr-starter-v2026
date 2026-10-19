@@ -115,25 +115,29 @@ You tell FitFindr what you want in plain language, e.g. "vintage graphic tee und
 **One full query**
 
 ```
-$ python app.py ask '...'
+$ python app.py ask 'designer ballgown size XXS under $5'
 
+  Nothing matched 'designer ballgown' in size XXS under $5. Try to raise your price limit, drop the size, or use fewer or broader keywords (e.g. 'jacket' instead of a brand or style).
 ```
+
+<!-- TODO (needs GEMINI_API_KEY in .env): paste the real output of
+     python app.py ask 'vintage graphic tee under $30, size M' here. -->
 
 **The three tools, tested one at a time**
 
 ```
-$ python -c "from tools import search_listings; print(search_listings('graphic tee', max_price=30))"
-
+$ python -c "from tools import search_listings; print([(x['title'], x['size'], x['price']) for x in search_listings('graphic tee', 'M', 30)])"
+[('Y2K Baby Tee — Butterfly Print', 'S/M', 18.0), ('Mesh Long-Sleeve Top — Black', 'S/M', 15.0)]
 ```
 
 ```
-$ python -c "from tools import suggest_outfit; ..."
-
+$ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
+<!-- TODO: paste real output once the API key is set -->
 ```
 
 ```
-$ python -c "from tools import create_fit_card; ..."
-
+$ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
+<!-- TODO: paste real output once the API key is set -->
 ```
 
 ---
@@ -149,15 +153,15 @@ $ python -c "from tools import create_fit_card; ..."
 
 **Moment 1**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* A `search_listings` that filters on size. The starter warned that a plain substring test lets "s" match "US 9" and "l" match "XL".
+- *What came back:* A first design that compared sizes as whole tokens instead of substrings.
+- *What I changed:* I split each listing size into tokens (`S/M` becomes `s`, `m`) and match the requested size against those, so "M" finds "S/M" and "M/L", "S" no longer returns shoes, and "L" does not return "XL". I wrote this rule into the Tool Inventory.
 
 **Moment 2**
 
-- *What I asked for:*
-- *What came back:*
-- *What I changed:*
+- *What I asked for:* A `run_agent` loop that goes through the session and stops on an empty search, without needing the model key to test it.
+- *What came back:* A loop with a step variable (`search`, `outfit`, `card`) and the branch right after search.
+- *What I changed:* I tested it by replacing the two model tools with stubs that record what they were called with. The stub received the very same object as `session["selected_item"]`, and for an impossible query `fit_card` stayed `None`. My first empty-search message was only "no results", so I rewrote it to name the query and say which parts to relax.
 
 <!-- ═══════════════════════ UNIT 4 — THE TEST ═══════════════════════
 
