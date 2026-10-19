@@ -115,13 +115,26 @@ You tell FitFindr what you want in plain language, e.g. "vintage graphic tee und
 **One full query**
 
 ```
+$ python app.py ask 'vintage graphic tee under $30, size M'
+
+  Found:    Y2K Baby Tee — Butterfly Print — $18.0 on depop
+
+  Outfit:   **Look 1: Y2K Streetwear**
+Pair the butterfly baby tee with your baggy straight-leg jeans, black cropped zip hoodie thrown over your shoulders, and chunky white sneakers. Finish with the black crossbody bag. 
+
+**Look 2: Casual Grunge**
+Tuck the baby tee into your wide-leg khaki trousers, add the brown leather belt to define the waist, and ground the look with your black combat boots and vintage black denim jacket.
+
+  Fit card: Scored this adorable Y2K butterfly baby tee for just $18 on Depop and I'm obsessed. Thinking I'll lean into the nostalgic streetwear vibes with baggy denim and chunky sneakers, but it'd also look so good with wide-leg trousers and combat boots for a grunge moment. 🦋✨
+```
+
+Empty search, same command with an impossible query:
+
+```
 $ python app.py ask 'designer ballgown size XXS under $5'
 
   Nothing matched 'designer ballgown' in size XXS under $5. Try to raise your price limit, drop the size, or use fewer or broader keywords (e.g. 'jacket' instead of a brand or style).
 ```
-
-<!-- TODO (needs GEMINI_API_KEY in .env): paste the real output of
-     python app.py ask 'vintage graphic tee under $30, size M' here. -->
 
 **The three tools, tested one at a time**
 
@@ -132,12 +145,16 @@ $ python -c "from tools import search_listings; print([(x['title'], x['size'], x
 
 ```
 $ python -c "from tools import suggest_outfit; from utils.data_loader import get_example_wardrobe, load_listings; print(suggest_outfit(load_listings()[0], get_example_wardrobe()))"
-<!-- TODO: paste real output once the API key is set -->
+**Look 1: Off-Duty Grunge**
+Pair the vintage Levi's with the **white ribbed tank top** tucked in, layered under the **vintage black denim jacket**. Cinch with the **brown leather belt** and anchor with the **black combat boots**. Finish with the **black crossbody bag**. 
+
+**Look 2: Casual Streetwear**
+Style the jeans with the **oversized grey crewneck sweatshirt** half-tucked. Add the **chunky white sneakers** and the **black cropped zip hoodie** worn open or draped over your shoulders.
 ```
 
 ```
 $ python -c "from tools import create_fit_card; from utils.data_loader import load_listings; print(create_fit_card('jeans and white sneakers', load_listings()[0]))"
-<!-- TODO: paste real output once the API key is set -->
+Found my new everyday uniform on Depop for just $38. These vintage Levi’s 501s have that perfect broken-in feel and look so effortless with crisp white sneakers. Absolutely living in this relaxed 90s denim vibe all season.
 ```
 
 ---
